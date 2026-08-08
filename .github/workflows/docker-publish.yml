@@ -71,6 +71,8 @@ jobs:
             type=semver,pattern={{version}},value=${{ inputs.tag }}
             type=raw,value=latest
 
+      - uses: docker/setup-qemu-action@v3
+
       - uses: docker/setup-buildx-action@v3
 
       - name: Build and push
@@ -78,6 +80,9 @@ jobs:
         with:
           context: .
           push: true
+          # Oracle's free-tier VM is Ampere ARM (aarch64); build for both so
+          # the same tag also runs on an amd64 box or an Apple Silicon Mac.
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
