@@ -65,11 +65,19 @@ def run_interactive_round_trip(timeout_seconds: int) -> None:
     db.add_account(_TEST_ACCOUNT_ID, "telegram-test@example.com")
     fake_candidates = [
         EmailSummary(
-            id="t1", thread_id="t1", sender="test-sender@example.com", subject="Test candidate", snippet="s", date="d"
+            id="t1",
+            thread_id="t1",
+            sender="test-sender@example.com",
+            subject="Test candidate",
+            snippet="s",
+            date="d",
         )
     ]
     fake_manifest = BackupManifest(
-        drive_file_id="test-fake-id", drive_file_link="https://example.com/fake-backup", message_count=1, message_ids=["t1"]
+        drive_file_id="test-fake-id",
+        drive_file_link="https://example.com/fake-backup",
+        message_count=1,
+        message_ids=["t1"],
     )
 
     with (
@@ -79,15 +87,21 @@ def run_interactive_round_trip(timeout_seconds: int) -> None:
         patch("mailbox_agent.graphs.retention_sweep.config.DRY_RUN", False),
         patch("mailbox_agent.graphs.retention_sweep._gmail_service", return_value=MagicMock()),
         patch("mailbox_agent.graphs.retention_sweep._drive_service", return_value=MagicMock()),
-        patch("mailbox_agent.graphs.retention_sweep.gmail.find_retention_candidates", return_value=fake_candidates),
-        patch("mailbox_agent.graphs.retention_sweep.drive.backup_messages_to_drive", return_value=fake_manifest),
+        patch(
+            "mailbox_agent.graphs.retention_sweep.gmail.find_retention_candidates",
+            return_value=fake_candidates,
+        ),
+        patch(
+            "mailbox_agent.graphs.retention_sweep.drive.backup_messages_to_drive", return_value=fake_manifest
+        ),
         patch("mailbox_agent.graphs.retention_sweep.gmail.trash_message") as mock_trash,
     ):
         graph = get_sweep_graph()
         run_id = f"{_TEST_ACCOUNT_ID}:sweep:test:{uuid.uuid4().hex[:6]}"
         with INVOKE_LOCK:
             result = graph.invoke(
-                {"account_id": _TEST_ACCOUNT_ID, "run_id": run_id}, config={"configurable": {"thread_id": run_id}}
+                {"account_id": _TEST_ACCOUNT_ID, "run_id": run_id},
+                config={"configurable": {"thread_id": run_id}},
             )
         this_approval_id = result.get("approval_id")
 
@@ -106,7 +120,9 @@ def run_interactive_round_trip(timeout_seconds: int) -> None:
                 if cq and cq.get("data", "").endswith(f":{this_approval_id}"):
                     telegram_bot._handle_callback(update)  # the real production handler
                     print("\nGot your response, resumed the graph via the real callback handler.")
-                    print(f"gmail.trash_message call count (mocked, so real Gmail untouched): {mock_trash.call_count}")
+                    print(
+                        f"gmail.trash_message call count (mocked, so real Gmail untouched): {mock_trash.call_count}"
+                    )
                     return
         print("\nTimed out waiting for a response - nothing resumed. Run again if you want to retry.")
 

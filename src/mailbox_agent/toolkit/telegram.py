@@ -44,7 +44,9 @@ def _call(method: str, **params):
         data = resp.json()
     except ValueError:
         resp.raise_for_status()
-        raise RuntimeError(f"Telegram API returned a non-JSON {resp.status_code} response: {resp.text[:300]}") from None
+        raise RuntimeError(
+            f"Telegram API returned a non-JSON {resp.status_code} response: {resp.text[:300]}"
+        ) from None
 
     if not data.get("ok"):
         description = data.get("description", data)
