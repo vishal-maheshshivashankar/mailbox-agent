@@ -19,3 +19,10 @@ services:
     volumes:
       - ./data:/app/data
       - ./secrets:/app/secrets
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 512M
+        reservations:
+          memory: 128M
