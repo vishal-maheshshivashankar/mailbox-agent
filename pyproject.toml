@@ -38,6 +38,7 @@ dev = [
 mailbox-agent-serve = "mailbox_agent.scripts.serve:main"
 mailbox-agent-add-account = "mailbox_agent.scripts.add_account:main"
 mailbox-agent-sort = "mailbox_agent.scripts.run_sort:main"
+mailbox-agent-backfill = "mailbox_agent.scripts.backfill_classify:main"
 mailbox-agent-sweep = "mailbox_agent.scripts.run_sweep:main"
 mailbox-agent-telegram-bot = "mailbox_agent.scripts.telegram_bot:main"
 mailbox-agent-eval = "mailbox_agent.eval.run_eval:main"

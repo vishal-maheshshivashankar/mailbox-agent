@@ -120,6 +120,29 @@ mailbox-agent-sweep --account personal
 mailbox-agent-telegram-bot   # just the approval listener
 ```
 
+## Backfill: label mail from before you onboarded
+
+The scheduled sort loop only ever looks at mail *since its last run* - on
+an account's very first run that means just the last 24h. Anything already
+sitting in the mailbox before that is never labeled by the regular loop,
+and since the retention sweep only ever searches by `AI/*` label, that
+backlog is invisible to retention too - forever, unless you run this once:
+
+```bash
+mailbox-agent-backfill --account personal --dry-run   # see what it would label first
+mailbox-agent-backfill --account personal              # then actually label it
+mailbox-agent-backfill --account personal --before 2025/01/01   # only mail older than this
+```
+
+Safe to re-run — anything already carrying an `AI/*` label is skipped, so
+an interrupted run or a second pass just picks up where it left off. It
+only labels; nothing is backed up or deleted here.
+
+**Heads up**: once backfilled, that old mail is exactly what the *next*
+scheduled retention sweep will see as candidates. With `DRY_RUN=true`
+(the default) you're safe either way — review the sweep's report before
+ever flipping to `DRY_RUN=false`.
+
 ## Development
 
 ```bash

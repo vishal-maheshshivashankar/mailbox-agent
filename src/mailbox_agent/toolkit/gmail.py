@@ -123,6 +123,31 @@ def list_new_messages(service, since_date: str | None, max_results: int = 200) -
     return ids
 
 
+def list_messages_in_range(
+    service, after_date: str | None = None, before_date: str | None = None, max_results: int = 5000
+) -> list[str]:
+    """Like `list_new_messages` but with no implicit 'yesterday' fallback -
+    `after_date`/`before_date` are 'YYYY/MM/DD' or None for unbounded on
+    that side. Used by the one-off backfill script (scripts/backfill_classify.py)
+    to reach mail older than an account's first sort-loop run, which
+    `list_new_messages` structurally can't see."""
+    query = "-in:chat -in:trash -in:spam"
+    if after_date:
+        query += f" after:{after_date}"
+    if before_date:
+        query += f" before:{before_date}"
+
+    ids: list[str] = []
+    page_token = None
+    while True:
+        resp = _list_messages_page(service, query, page_token, min(100, max_results - len(ids)))
+        ids.extend(m["id"] for m in resp.get("messages", []))
+        page_token = resp.get("nextPageToken")
+        if not page_token or len(ids) >= max_results:
+            break
+    return ids
+
+
 @retry_read
 def get_message_summary(service, msg_id: str) -> EmailSummary:
     msg = (
