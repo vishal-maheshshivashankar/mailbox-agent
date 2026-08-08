@@ -4,7 +4,11 @@
 # Conventional Commits so `cz bump` can derive the next version/tag.
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    # Pinned to match the exact `ruff` version in pyproject.toml's dev
+    # extra - three different ruff versions (this hook's own isolated env,
+    # the local venv, CI's install) reformatting the same file differently
+    # is what broke CI twice in a row. Bump both together, never one alone.
+    rev: v0.16.2
     hooks:
       - id: ruff
         args: [--fix]
