@@ -1,0 +1,35 @@
+name: CI
+
+# Runs on every push/PR: lint, types, unit tests. Deliberately does NOT
+# include the classification eval - that calls the real Gemini API and
+# costs money on every commit, which is a bad default for a required check.
+# See eval.yml (manual trigger) and docs/EVALUATION.md.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - run: pip install -e ".[dev]"
+
+      - name: Lint
+        run: ruff check src tests
+
+      - name: Format check
+        run: ruff format --check src tests
+
+      - name: Type check
+        run: mypy src
+
+      - name: Unit tests
+        run: pytest tests/unit -v

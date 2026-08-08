@@ -1,0 +1,21 @@
+# Single service on purpose: SQLite (data/) is a mounted file, not a
+# database server, so there's no second container to run alongside it at
+# this scale. See docs/ARCHITECTURE.md sections 10-11 for the reasoning and
+# the Postgres migration path if that ever changes.
+#
+# `image` + `build` together: local dev runs `docker compose build` to
+# build from the Dockerfile and tag it as the image below; the Oracle VM
+# never builds, it just `docker compose pull`s the tag CI published to
+# GHCR. Set IMAGE_TAG to a released version (see README Deployment) - it
+# defaults to `latest`.
+services:
+  app:
+    image: ghcr.io/vishal-maheshshivashankar/mailbox-agent:${IMAGE_TAG:-latest}
+    build: .
+    container_name: mailbox-agent
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+      - ./secrets:/app/secrets

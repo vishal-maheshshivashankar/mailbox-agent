@@ -1,0 +1,49 @@
+# Mirrors .github/workflows/ci.yml - lint, types, unit tests on every push/MR.
+# Two CI configs for one pipeline is duplication (keep them in sync by hand,
+# or drop whichever platform you don't actually use); it's here because this
+# repo doesn't know in advance which of GitHub/GitLab you'll host it on.
+#
+# The classification eval (docs/EVALUATION.md) is deliberately NOT wired in
+# here either - it calls the real Gemini API and costs money per run, so it
+# stays a manual job, not something that runs on every push.
+
+image: python:3.11-slim
+
+stages:
+  - test
+
+variables:
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+
+cache:
+  paths:
+    - .cache/pip
+
+before_script:
+  - pip install -e ".[dev]"
+
+lint:
+  stage: test
+  script:
+    - ruff check src tests
+    - ruff format --check src tests
+
+typecheck:
+  stage: test
+  script:
+    - mypy src
+
+unit-tests:
+  stage: test
+  script:
+    - pytest tests/unit -v
+
+# Manual only - run deliberately from the GitLab UI/API before shipping a
+# toolkit/llm.py change. Needs GEMINI_API_KEY set as a masked CI/CD variable.
+classification-eval:
+  stage: test
+  script:
+    - mailbox-agent-eval --threshold "${EVAL_THRESHOLD:-0.75}"
+  rules:
+    - when: manual
+  allow_failure: true
