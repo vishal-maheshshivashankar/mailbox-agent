@@ -184,9 +184,19 @@ cz bump          # reads commit history, bumps version in pyproject.toml,
 git push && git push --tags
 ```
 
-Pushing a `vX.Y.Z` tag triggers `.github/workflows/docker-publish.yml`,
-which builds the image from the `Dockerfile` and pushes
-`ghcr.io/vishal-maheshshivashankar/mailbox-agent:X.Y.Z` and `:latest` to
+Publishing the image is a **separate, manual** step — pushing the tag does
+not build anything by itself. When you're ready to ship that version, run
+the `Publish image` workflow (`.github/workflows/docker-publish.yml`) by
+hand:
+
+```bash
+gh workflow run docker-publish.yml -f tag=v0.2.0
+```
+
+or from the GitHub UI: Actions → Publish image → Run workflow. It first
+re-runs lint/types/unit-tests against that exact tag; only if they pass
+does it build the image and push
+`ghcr.io/vishal-maheshshivashankar/mailbox-agent:0.2.0` and `:latest` to
 GitHub Container Registry.
 
 ## Deployment (Oracle VM via Docker Compose)
