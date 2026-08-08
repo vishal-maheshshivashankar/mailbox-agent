@@ -245,13 +245,38 @@ scheduler hasn't touched its heartbeat file in the last 10 minutes —
 catches a hung scheduler thread, not just a crashed process (which
 `restart: unless-stopped` already covers on its own). Plain `docker
 compose` doesn't act on health status by itself, so wire up
-`deploy/health-restart.sh` via cron on the VM to actually restart an
-unhealthy container:
+`deploy/health-restart.sh` to actually restart an unhealthy container.
+Minimal Ubuntu cloud images don't ship `cron`, so this uses a systemd
+timer instead (`sudo apt-get install -y cron` + a crontab entry works
+too, if you'd rather have that):
 
 ```bash
-crontab -e
-# add:
-*/5 * * * * /home/ubuntu/mailbox-agent/deploy/health-restart.sh >> /home/ubuntu/mailbox-agent/health-restart.log 2>&1
+sudo tee /etc/systemd/system/mailbox-agent-health.service >/dev/null <<'EOF'
+[Unit]
+Description=mailbox-agent health-restart check
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/mailbox-agent/deploy/health-restart.sh
+User=ubuntu
+EOF
+
+sudo tee /etc/systemd/system/mailbox-agent-health.timer >/dev/null <<'EOF'
+[Unit]
+Description=Run mailbox-agent health-restart check every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now mailbox-agent-health.timer
 ```
+
+Check it: `systemctl status mailbox-agent-health.timer` / `journalctl -u mailbox-agent-health.service`.
 
 Check current health any time with `docker inspect --format='{{.State.Health.Status}}' mailbox-agent`.
