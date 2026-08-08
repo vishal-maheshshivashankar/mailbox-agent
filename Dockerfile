@@ -26,4 +26,14 @@ USER agent
 
 VOLUME ["/app/data", "/app/secrets"]
 
+# No HTTP port to probe (no web server), so liveness is a heartbeat file the
+# scheduler touches every HEARTBEAT_INTERVAL_MINUTES (default 2min) - see
+# scripts/serve.py::_write_heartbeat. 600s = 5x that interval, tolerant of
+# a slow tick without masking a genuinely hung scheduler thread. Marking
+# "unhealthy" doesn't restart anything by itself under plain `docker
+# compose` (restart: unless-stopped only reacts to the process exiting) -
+# see the health-restart cron job in README's Deployment section for that.
+HEALTHCHECK --interval=60s --timeout=5s --start-period=30s --retries=3 \
+    CMD python -c "import os,sys,time; p='/app/data/heartbeat'; sys.exit(0 if os.path.exists(p) and time.time()-os.path.getmtime(p) < 600 else 1)"
+
 CMD ["mailbox-agent-serve"]

@@ -54,6 +54,12 @@ SORT_INTERVAL_MINUTES = int(os.getenv("SORT_INTERVAL_MINUTES", "20"))
 SWEEP_DAY_OF_WEEK = os.getenv("SWEEP_DAY_OF_WEEK", "sun")
 SWEEP_HOUR = int(os.getenv("SWEEP_HOUR", "9"))
 
+# Liveness signal for Dockerfile's HEALTHCHECK - independent of
+# SORT_INTERVAL_MINUTES because it's about whether the scheduler thread is
+# still alive at all, not whether a sort/sweep job happened recently.
+HEARTBEAT_PATH = os.getenv("HEARTBEAT_PATH", "data/heartbeat")
+HEARTBEAT_INTERVAL_MINUTES = int(os.getenv("HEARTBEAT_INTERVAL_MINUTES", "2"))
+
 APPROVAL_TTL_HOURS = int(os.getenv("APPROVAL_TTL_HOURS", "48"))
 
 DRY_RUN = _bool("DRY_RUN", True)

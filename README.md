@@ -232,3 +232,26 @@ it inline each time. Omitting `IMAGE_TAG` pulls `:latest`.
 Because the repo is public, GHCR image pulls need no authentication on the
 VM. If you ever flip the repo private, `docker login ghcr.io -u <user>`
 with a PAT that has `read:packages` scope first.
+
+**Editing `.env` on the VM?** Use `docker compose up -d`, not `docker
+compose restart` — `restart` reuses the container's already-baked-in
+environment and silently ignores `.env` changes; `up -d` recreates the
+container with the new values.
+
+### Health monitoring
+
+The image has a `HEALTHCHECK` (see `Dockerfile`) that fails if the
+scheduler hasn't touched its heartbeat file in the last 10 minutes —
+catches a hung scheduler thread, not just a crashed process (which
+`restart: unless-stopped` already covers on its own). Plain `docker
+compose` doesn't act on health status by itself, so wire up
+`deploy/health-restart.sh` via cron on the VM to actually restart an
+unhealthy container:
+
+```bash
+crontab -e
+# add:
+*/5 * * * * /home/ubuntu/mailbox-agent/deploy/health-restart.sh >> /home/ubuntu/mailbox-agent/health-restart.log 2>&1
+```
+
+Check current health any time with `docker inspect --format='{{.State.Health.Status}}' mailbox-agent`.

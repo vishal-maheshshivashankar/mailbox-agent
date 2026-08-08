@@ -7,6 +7,7 @@ section 11 for the deployment picture.
 """
 
 import logging
+import os
 from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -18,6 +19,15 @@ from mailbox_agent.logging_config import configure_logging
 from mailbox_agent.scripts import run_sort, run_sweep, telegram_bot
 
 logger = logging.getLogger(__name__)
+
+
+def _write_heartbeat() -> None:
+    """Touches HEARTBEAT_PATH so Dockerfile's HEALTHCHECK can tell the
+    scheduler thread is still alive, independent of whether a sort/sweep
+    job has run recently (see config.HEARTBEAT_PATH)."""
+    os.makedirs(os.path.dirname(config.HEARTBEAT_PATH) or ".", exist_ok=True)
+    with open(config.HEARTBEAT_PATH, "w") as f:
+        f.write(datetime.now().isoformat())
 
 
 def main():
@@ -36,6 +46,12 @@ def main():
         run_sweep.run_for_all_accounts,
         trigger=CronTrigger(day_of_week=config.SWEEP_DAY_OF_WEEK, hour=config.SWEEP_HOUR),
         id="retention_sweep",
+    )
+    scheduler.add_job(
+        _write_heartbeat,
+        trigger=IntervalTrigger(minutes=config.HEARTBEAT_INTERVAL_MINUTES),
+        id="heartbeat",
+        next_run_time=datetime.now(),
     )
     scheduler.start()
     logger.info(
