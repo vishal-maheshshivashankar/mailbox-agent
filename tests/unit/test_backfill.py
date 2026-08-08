@@ -26,9 +26,11 @@ def test_backfill_labels_unlabeled_and_skips_already_labeled():
         ),
         patch(
             "mailbox_agent.scripts.backfill_classify.gmail.get_message_summary",
-            side_effect=lambda service, msg_id: old_msg
-            if msg_id == "m1"
-            else old_msg.model_copy(update={"id": "m2", "label_ids": ["existing-ai-label"]}),
+            side_effect=lambda service, msg_id: (
+                old_msg
+                if msg_id == "m1"
+                else old_msg.model_copy(update={"id": "m2", "label_ids": ["existing-ai-label"]})
+            ),
         ),
         patch(
             "mailbox_agent.scripts.backfill_classify.gmail.already_labeled_by_agent",
