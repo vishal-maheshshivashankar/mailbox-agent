@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mailbox-agent"
-version = "0.1.0"
+version = "0.2.0"
 description = "LangGraph agent that sorts/labels Gmail and retires old low-value mail with Drive backup + Telegram approval"
 requires-python = ">=3.10"
 readme = "README.md"
@@ -75,7 +75,7 @@ addopts = "-m 'not eval'"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.1.0"
+version = "0.2.0"
 version_files = ["pyproject.toml:version"]
 tag_format = "v$version"
 update_changelog_on_bump = true
